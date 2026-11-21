@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.egg-info/
+voices/*
+!voices/.gitkeep
+*.wav
+*.safetensors
+*.gguf
+.env
