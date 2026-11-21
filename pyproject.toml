@@ -9,8 +9,10 @@ requires-python = ">=3.11"
 dependencies = ["fastapi>=0.110,<1", "uvicorn>=0.27,<1", "safetensors>=0.4,<1", "numpy>=1.24,<3"]
 [project.optional-dependencies]
 dev = ["pytest>=8,<10", "httpx>=0.27,<1"]
+inference = ["voxcpm==2.0.3", "soundfile>=0.12,<1"]
 [project.scripts]
 voicecheck = "voxcpm_realtime.cli:main"
+voxcpm-speak = "voxcpm_realtime.speak:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 [tool.pytest.ini_options]
