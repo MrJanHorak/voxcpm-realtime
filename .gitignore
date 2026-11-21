@@ -4,6 +4,8 @@ __pycache__/
 *.egg-info/
 voices/*
 !voices/.gitkeep
+models/
+outputs/
 *.wav
 *.safetensors
 *.gguf
