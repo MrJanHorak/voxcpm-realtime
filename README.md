@@ -50,3 +50,7 @@ This is not streaming. Base-model and adapter assets are not committed. See [Pha
 ## Phase 3: persistent local inference
 
 Set `VOXCPM_MODEL_DIR`, `VOXCPM_VOICE_DIR`, and optionally `VOXCPM_REFERENCE_WAV` before starting uvicorn. Use **one worker** on localhost. `POST /api/warmup` loads the model and generates a warmup; `POST /api/synthesize` accepts `{"text":"Hello.","seed":35}` and returns WAV audio. Requests serialize within the process. See [Phase 3](docs/PHASE3.md) for setup, measurements, and limitations.
+
+## Phase 4: experimental Q8 backend
+
+The locally evaluated audio.cpp backend is substantially faster on the tested RTX 3050. See [Phase 4](docs/PHASE4.md) for the measured results, limitations, and separate local server instructions. Voice quality and watermark presence are not yet verified.
