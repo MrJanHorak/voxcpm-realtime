@@ -5,6 +5,7 @@ param(
     [string]$Model = 'outputs/voxcpm2-q8-local.gguf',
     [string]$VoiceDir = 'voices/step150',
     [string]$Reference = 'voices/step150/reference.wav',
+    [ValidateSet('offline', 'streaming')][string]$Mode = 'offline',
     [ValidateRange(1, 65535)][int]$Port = 8766
 )
 $ErrorActionPreference = 'Stop'
@@ -25,7 +26,7 @@ $config = @{
     host = '127.0.0.1'; port = $Port; backend = 'cuda'; device = 0; threads = 4
     lazy_load = $true; max_loaded_models = 1
     models = @(@{
-        id = 'step150'; family = 'voxcpm2'; path = $modelPath; task = 'tts'; mode = 'offline'
+        id = 'step150'; family = 'voxcpm2'; path = $modelPath; task = 'tts'; mode = $Mode
         default_voice_preset = @{ voice_ref = $referencePath }
         session_options = @{ 'voxcpm2.lora' = $voicePath }
     })
@@ -35,7 +36,7 @@ $config | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $configPath -Encodi
 $originalPath = $env:PATH
 try {
     $env:PATH = "$runtime;$originalPath"
-    Write-Host "Starting audio.cpp on http://127.0.0.1:$Port; press Ctrl+C to stop."
+    Write-Host "Starting audio.cpp ($Mode) on http://127.0.0.1:$Port; press Ctrl+C to stop."
     & $exe --config $configPath --log
     if ($LASTEXITCODE -ne 0) { throw "audio.cpp exited with code $LASTEXITCODE" }
 } finally { $env:PATH = $originalPath }

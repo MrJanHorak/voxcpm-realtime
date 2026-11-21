@@ -29,7 +29,7 @@ Then visit http://127.0.0.1:8765/docs or request `GET /health` and `GET /api/cap
 
 - Validates JSON, Safetensors readability/tensor names and optional WAV metadata; no arbitrary model code is executed.
 - `compatible: true` means **static checks passed**, NOT that the adapter matches the installed base model or generates correct speech.
-- Native local inference and benchmarking are implemented; streaming, watermarking and client SDKs are not implemented.
+- Native local inference and benchmarking are implemented; experimental audio.cpp streaming is available. Watermarking and full client SDKs are not implemented.
 - The validation API accepts local filesystem paths and is intentionally localhost-only; add path restrictions and authentication before remote deployment.
 - Keep private voice recordings and LoRA weights out of version control. Only use voices with permission and retain required model watermarking and AI-generated-audio disclosures.
 
@@ -54,3 +54,7 @@ Set `VOXCPM_MODEL_DIR`, `VOXCPM_VOICE_DIR`, and optionally `VOXCPM_REFERENCE_WAV
 ## Phase 4: experimental Q8 backend
 
 The locally evaluated audio.cpp backend is substantially faster on the tested RTX 3050. See [Phase 4](docs/PHASE4.md) for the measured results, limitations, and separate local server instructions. The user reported that the test samples sounded good; watermark presence remains unverified.
+
+## Phase 5: experimental streaming
+
+Start the audio.cpp server in streaming mode and receive or play audio as it is generated. See [Phase 5](docs/PHASE5.md) for commands, API details, measured first-audio latency, and limitations.
