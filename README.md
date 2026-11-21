@@ -53,4 +53,4 @@ Set `VOXCPM_MODEL_DIR`, `VOXCPM_VOICE_DIR`, and optionally `VOXCPM_REFERENCE_WAV
 
 ## Phase 4: experimental Q8 backend
 
-The locally evaluated audio.cpp backend is substantially faster on the tested RTX 3050. See [Phase 4](docs/PHASE4.md) for the measured results, limitations, and separate local server instructions. Voice quality and watermark presence are not yet verified.
+The locally evaluated audio.cpp backend is substantially faster on the tested RTX 3050. See [Phase 4](docs/PHASE4.md) for the measured results, limitations, and separate local server instructions. The user reported that the test samples sounded good; watermark presence remains unverified.
