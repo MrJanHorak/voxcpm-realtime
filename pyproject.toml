@@ -13,6 +13,7 @@ inference = ["voxcpm==2.0.3", "soundfile>=0.12,<1"]
 [project.scripts]
 voicecheck = "voxcpm_realtime.cli:main"
 voxcpm-speak = "voxcpm_realtime.speak:main"
+voxcpm-benchmark = "voxcpm_realtime.benchmark:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 [tool.pytest.ini_options]

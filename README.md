@@ -1,6 +1,6 @@
-# VoxCPM Real-Time Voice Engine — Phase 1
+# VoxCPM Real-Time Voice Engine
 
-Independent Python scaffold for checking VoxCPM2 LoRA voice packages before building low-latency inference. The existing `voiceover-automation` project is **not modified**.
+Independent local VoxCPM2 LoRA voice validation and persistent inference engine. The current native backend is experimental and has not achieved real-time speed on the tested GPU. The existing `voiceover-automation` project is **not modified**.
 
 ## Source compatibility
 
@@ -29,7 +29,7 @@ Then visit http://127.0.0.1:8765/docs or request `GET /health` and `GET /api/cap
 
 - Validates JSON, Safetensors readability/tensor names and optional WAV metadata; no arbitrary model code is executed.
 - `compatible: true` means **static checks passed**, NOT that the adapter matches the installed base model or generates correct speech.
-- Inference, model download, LoRA loading, CUDA benchmarks, streaming, audio watermarking and client SDKs are **not yet implemented**.
+- Native local inference and benchmarking are implemented; streaming, watermarking and client SDKs are not implemented.
 - The validation API accepts local filesystem paths and is intentionally localhost-only; add path restrictions and authentication before remote deployment.
 - Keep private voice recordings and LoRA weights out of version control. Only use voices with permission and retain required model watermarking and AI-generated-audio disclosures.
 
@@ -45,4 +45,8 @@ Then visit http://127.0.0.1:8765/docs or request `GET /health` and `GET /api/cap
 
 See [Phase 2 setup](docs/PHASE2.md). Install with `pip install -e ".[dev,inference]"` after configuring a compatible CUDA PyTorch build. Run `voxcpm-speak --model-dir ./models/VoxCPM2 --voice-dir ./voices/step150 --text "Hello, this is a test." --output ./outputs/first.wav`.
 
-This is not streaming and has not yet been validated on the RTX 3050. Base-model and adapter assets are not committed.
+This is not streaming. Base-model and adapter assets are not committed. See [Phase 3](docs/PHASE3.md) for the persistent server and measured results.
+
+## Phase 3: persistent local inference
+
+Set `VOXCPM_MODEL_DIR`, `VOXCPM_VOICE_DIR`, and optionally `VOXCPM_REFERENCE_WAV` before starting uvicorn. Use **one worker** on localhost. `POST /api/warmup` loads the model and generates a warmup; `POST /api/synthesize` accepts `{"text":"Hello.","seed":35}` and returns WAV audio. Requests serialize within the process. See [Phase 3](docs/PHASE3.md) for setup, measurements, and limitations.
