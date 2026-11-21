@@ -29,7 +29,7 @@ Then visit http://127.0.0.1:8765/docs or request `GET /health` and `GET /api/cap
 
 - Validates JSON, Safetensors readability/tensor names and optional WAV metadata; no arbitrary model code is executed.
 - `compatible: true` means **static checks passed**, NOT that the adapter matches the installed base model or generates correct speech.
-- Native local inference and benchmarking are implemented; experimental audio.cpp streaming is available. Watermarking and full client SDKs are not implemented.
+- Native local inference and benchmarking are implemented; experimental audio.cpp streaming is available. A buffered Perth-watermarked client is available; the raw backends and streaming client do not apply watermarks.
 - The validation API accepts local filesystem paths and is intentionally localhost-only; add path restrictions and authentication before remote deployment.
 - Keep private voice recordings and LoRA weights out of version control. Only use voices with permission and retain required model watermarking and AI-generated-audio disclosures.
 
@@ -58,3 +58,7 @@ The locally evaluated audio.cpp backend is substantially faster on the tested RT
 ## Phase 5: experimental streaming
 
 Start the audio.cpp server in streaming mode and receive or play audio as it is generated. See [Phase 5](docs/PHASE5.md) for commands, API details, measured first-audio latency, and limitations.
+
+## Phase 6: private voice packages
+
+See [Phase 6](docs/PHASE6.md) for package selection and buffered, Perth-watermarked synthesis. The existing `step150` voice requires this watermark; raw server and streaming output do not apply it.

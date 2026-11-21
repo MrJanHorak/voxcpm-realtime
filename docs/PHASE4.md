@@ -1,3 +1,5 @@
+> **Phase 6 correction:** The existing step150 metadata requires a Perth implicit watermark. The raw output described here does not apply it. Use the buffered [watermarked client](PHASE6.md) for this voice.
+
 # Phase 4 — audio.cpp Q8 evaluation
 
 This is an experimental, separate local server. It does not replace the Phase 3 FastAPI server. The test used audio.cpp v0.9.5, commit `61c7838baf1f7f34769b5b7bd369c0d78edf9535`, the official Windows CUDA 12.4 release and runtime archives. Their SHA-256 digests were checked against the GitHub release metadata. The current checkout and archives are under ignored `outputs/`; they are not shipped in Git. The exact local VoxCPM2 revision `7936080b41163874f38610f46f438e2c0757f9fd` was confirmed in its Hugging Face download metadata. The local checkpoint and adapter were never uploaded.

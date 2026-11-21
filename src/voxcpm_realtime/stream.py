@@ -6,6 +6,7 @@ import base64
 import binascii
 from contextlib import ExitStack
 import json
+import sys
 import time
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
@@ -97,6 +98,7 @@ def main():
     args = parser.parse_args()
     if args.no_play and not args.output:
         parser.error('Use --output when --no-play is specified')
+    print('Warning: streamed audio is not watermarked; this does not meet the step150 voice requirement.', file=sys.stderr)
     start = time.perf_counter()
     first = None
     count = total = 0

@@ -1,3 +1,5 @@
+> **Phase 6 correction:** The existing step150 metadata requires a Perth implicit watermark. The raw output described here does not apply it. Use the buffered [watermarked client](PHASE6.md) for this voice.
+
 # Phase 3 — Persistent local inference
 
 The server keeps one base model and one LoRA adapter in memory per process. Set the three environment variables below before starting it; the reference is optional. Relative paths are resolved against the server's working directory.

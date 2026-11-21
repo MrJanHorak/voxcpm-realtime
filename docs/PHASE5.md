@@ -1,3 +1,5 @@
+> **Phase 6 correction:** The existing step150 metadata requires a Perth implicit watermark. The raw output described here does not apply it. Use the buffered [watermarked client](PHASE6.md) for this voice.
+
 # Phase 5 — Streaming speech
 
 This experimental integration uses the audio.cpp server configured in **streaming** mode, with the same local Q8 model, LoRA and reference as Phase 4. Do not start a second GPU server at the same time on the 4 GiB GPU. Stop any existing offline server, then run:
