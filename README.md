@@ -40,3 +40,9 @@ Then visit http://127.0.0.1:8765/docs or request `GET /health` and `GET /api/cap
 3. Implement one-shot generation with the native `voxcpm` runtime and measure peak GPU memory on the RTX 3050 4 GB.
 4. Evaluate the persistent `audio.cpp` runtime separately for Q8 GPU deployment, with a verified LoRA merge/loading path.
 5. Only after successful audio generation, implement chunked streaming and latency tests.
+
+## Phase 2: native VoxCPM2 first WAV (experimental)
+
+See [Phase 2 setup](docs/PHASE2.md). Install with `pip install -e ".[dev,inference]"` after configuring a compatible CUDA PyTorch build. Run `voxcpm-speak --model-dir ./models/VoxCPM2 --voice-dir ./voices/step150 --text "Hello, this is a test." --output ./outputs/first.wav`.
+
+This is not streaming and has not yet been validated on the RTX 3050. Base-model and adapter assets are not committed.
