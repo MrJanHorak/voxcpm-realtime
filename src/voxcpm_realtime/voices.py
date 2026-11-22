@@ -4,6 +4,9 @@ import argparse
 import json
 import re
 from pathlib import Path
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlsplit
+from urllib.request import Request, urlopen
 from .inference import EXPECTED_REVISION
 from .validator import inspect_voice
 
@@ -75,15 +78,38 @@ def list_packages(root):
     return results
 
 
+def manager_request(url, voice=None):
+    parsed = urlsplit(url)
+    if parsed.scheme != 'http' or parsed.hostname not in ('localhost', '127.0.0.1', '::1') or parsed.username or parsed.password:
+        raise ValueError('Voice manager only supports local HTTP addresses')
+    endpoint = '/health' if voice is None else '/api/voices/select'
+    data = None if voice is None else json.dumps({'voice': voice}).encode('utf-8')
+    request = Request(url.rstrip('/') + endpoint, data=data,
+                      headers={'Content-Type': 'application/json'} if data else {})
+    try:
+        with urlopen(request, timeout=600) as response:
+            return json.load(response)
+    except HTTPError as exc:
+        raise ValueError(f'Manager returned HTTP {exc.code}: {exc.read(4096).decode("utf-8", errors="replace")}') from exc
+    except URLError as exc:
+        raise ValueError(f'Cannot connect to voice manager: {exc.reason}') from exc
+
+
 def main():
     p = argparse.ArgumentParser(description='Manage private local voice packages')
     sub = p.add_subparsers(dest='command', required=True)
     init = sub.add_parser('init'); init.add_argument('folder')
     check = sub.add_parser('check'); check.add_argument('folder')
     listing = sub.add_parser('list'); listing.add_argument('--root', default='voices')
+    select = sub.add_parser('select'); select.add_argument('voice'); select.add_argument('--url', default='http://127.0.0.1:8767')
+    status = sub.add_parser('status'); status.add_argument('--url', default='http://127.0.0.1:8767')
     args = p.parse_args()
     try:
-        result = initialize(args.folder) if args.command == 'init' else load_package(args.folder) if args.command == 'check' else list_packages(args.root)
+        if args.command == 'init': result = initialize(args.folder)
+        elif args.command == 'check': result = load_package(args.folder)
+        elif args.command == 'list': result = list_packages(args.root)
+        elif args.command == 'select': result = manager_request(args.url, args.voice)
+        else: result = manager_request(args.url)
         print(json.dumps(result, indent=2))
     except (ValueError, OSError) as exc:
         p.exit(1, f'Error: {exc}\n')

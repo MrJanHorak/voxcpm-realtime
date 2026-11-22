@@ -62,3 +62,7 @@ Start the audio.cpp server in streaming mode and receive or play audio as it is 
 ## Phase 6: private voice packages
 
 See [Phase 6](docs/PHASE6.md) for package selection and buffered synthesis, and [watermarked streaming](docs/PHASE6_STREAMING.md) for the experimental live client. The `step150` voice requires Perth watermarking; raw server responses do not apply it.
+
+## Phase 6: voice manager
+
+Use the [local voice manager](docs/PHASE6_MANAGER.md) to select one installed package at a time and coordinate switching with managed requests.

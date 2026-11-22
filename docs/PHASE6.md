@@ -17,7 +17,7 @@ python -m voxcpm_realtime.voices check voices/step150
 python -m voxcpm_realtime.voices init voices/<id>
 ```
 
-Initialization refuses to overwrite an existing package manifest. It performs static validation only. It checks the manifest's declared revision against the supported revision; it does not prove the selected GGUF was derived from that revision, the adapter fits it, or that a recording is appropriate. Only `step150` has been tested. Voice selection occurs at server startup; changing voices requires stopping and restarting the one server. Live switching and simultaneous voices have not been implemented.
+Initialization refuses to overwrite an existing package manifest. It performs static validation only. It checks the manifest's declared revision against the supported revision; it does not prove the selected GGUF was derived from that revision, the adapter fits it, or that a recording is appropriate. Only `step150` has been tested. The [local voice manager](PHASE6_MANAGER.md) can switch packages by restarting its owned backend while retaining one loaded voice. Simultaneous voices are not supported.
 
 ## Watermarked offline synthesis
 
