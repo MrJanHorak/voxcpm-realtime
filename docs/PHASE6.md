@@ -2,7 +2,7 @@
 
 ## Important watermark correction
 
-The existing `voices/step150/voice.json` explicitly says to apply the Perth implicit watermark. This was discovered during Phase 6: the Phase 2–5 generated samples were not passed through a known watermarking step. The raw audio.cpp offline and streaming endpoints, the Phase 3 FastAPI endpoint, `voxcpm-speak`, and the Phase 5 streaming client do **not** apply the required watermark. Do not treat their output as watermarked. The server launcher displays a warning. Phase 6 adds a separate buffered client that applies and checks Perth before returning audio. No real-time watermarked streaming has been implemented or validated.
+The existing `voices/step150/voice.json` explicitly says to apply the Perth implicit watermark. This was discovered during Phase 6: the Phase 2–5 generated samples were not passed through a known watermarking step. The raw audio.cpp offline and streaming endpoints, the Phase 3 FastAPI endpoint, `voxcpm-speak`, and the low-level `stream_speech()` function do **not** apply the required watermark. Do not treat their output as watermarked. The server launcher displays a warning. Phase 6 adds a separate buffered client that applies and checks Perth before returning audio. The Python streaming client now has an [experimental watermarked mode](PHASE6_STREAMING.md).
 
 ## Package format
 
@@ -48,4 +48,4 @@ For another validated package, start with `-VoiceId <id>` and pass the same `--m
 
 ## Local test, 2026-11-21
 
-The package-selected `step150` server generated a 2.56-second 48 kHz WAV through the new client. The final saved WAV scored 1.0 with the installed Perth implicit detector. On a separate existing 2.56-second sample, a CPU application took about 0.034 seconds after the watermarker was initialized; the unmarked sample scored approximately 0.00036 and the marked sample 1.0. These are individual tests, not a robustness or perceptual-quality study. The watermarked output was not independently listened to. No second trained voice, voice switching under load, concurrent clients, long-form synthesis, or watermark-preserving live streaming was tested.
+The package-selected `step150` server generated a 2.56-second 48 kHz WAV through the new client. The final saved WAV scored 1.0 with the installed Perth implicit detector. On a separate existing 2.56-second sample, a CPU application took about 0.034 seconds after the watermarker was initialized; the unmarked sample scored approximately 0.00036 and the marked sample 1.0. These are individual tests, not a robustness or perceptual-quality study. The watermarked output was not independently listened to. No second trained voice, voice switching under load, concurrent clients, long-form synthesis, or watermark-preserving live streaming was tested at that time.

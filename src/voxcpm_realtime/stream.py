@@ -6,7 +6,6 @@ import base64
 import binascii
 from contextlib import ExitStack
 import json
-import sys
 import time
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
@@ -87,6 +86,25 @@ def stream_speech(text, *, url='http://127.0.0.1:8766', model='step150', seed=35
         raise StreamError(f'Server returned HTTP {exc.code}: {detail}') from exc
 
 
+def stream_watermarked_speech(text, *, url='http://127.0.0.1:8766', model='step150', seed=35, timeout=300, watermarker=None):
+    """Yield locally watermarked and individually verified PCM16 segments.
+
+    Earlier chunks may already be played if a later chunk fails. Close this
+    iterator to release the HTTP connection when cancelling.
+    """
+    from urllib.parse import urlsplit
+    from .stream_watermark import PerthChunkWatermarker, watermark_segments
+    parsed = urlsplit(url)
+    if parsed.scheme != 'http' or parsed.hostname not in ('127.0.0.1', 'localhost', '::1') or parsed.username or parsed.password:
+        raise ValueError('Watermarked streaming only supports local HTTP servers')
+    marker = watermarker if watermarker is not None else PerthChunkWatermarker()
+    source = stream_speech(text, url=url, model=model, seed=seed, timeout=timeout)
+    try:
+        yield from watermark_segments(source, marker)
+    finally:
+        source.close()
+
+
 def main():
     parser = argparse.ArgumentParser(description='Stream VoxCPM2 speech from the local audio.cpp server')
     parser.add_argument('--text', required=True)
@@ -98,7 +116,6 @@ def main():
     args = parser.parse_args()
     if args.no_play and not args.output:
         parser.error('Use --output when --no-play is specified')
-    print('Warning: streamed audio is not watermarked; this does not meet the step150 voice requirement.', file=sys.stderr)
     start = time.perf_counter()
     first = None
     count = total = 0
@@ -115,7 +132,7 @@ def main():
             f = stack.enter_context(open(args.output, 'xb'))
             writer = stack.enter_context(wave.open(f, 'wb'))
             writer.setnchannels(1); writer.setsampwidth(2); writer.setframerate(SAMPLE_RATE)
-        chunks = stream_speech(args.text, url=args.url, model=args.model, seed=args.seed)
+        chunks = stream_watermarked_speech(args.text, url=args.url, model=args.model, seed=args.seed)
         stack.callback(chunks.close)
         for chunk in chunks:
             if first is None:
@@ -127,7 +144,7 @@ def main():
         elapsed = time.perf_counter() - start
     print(json.dumps({'first_audio_seconds': first, 'receive_seconds': elapsed,
                       'audio_seconds': total / 2 / SAMPLE_RATE, 'chunks': count,
-                      'playback_enabled': not args.no_play, 'output': args.output}, indent=2))
+                      'playback_enabled': not args.no_play, 'watermark': 'perth-implicit', 'chunk_detection_passed': True, 'output': args.output}, indent=2))
 
 
 if __name__ == '__main__':
