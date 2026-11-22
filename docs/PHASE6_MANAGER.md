@@ -26,7 +26,7 @@ For another installed package, select its ID with `python -m voxcpm_realtime.voi
 
 The manager listens on `127.0.0.1:8767` and starts a backend on `127.0.0.1:18766` by default; override these with `--port` and `--backend-port`. It refuses an occupied backend port and does not attach to or terminate a process it did not start. Stop the manager with Ctrl+C; it normally stops its owned child at shutdown. A forced termination or crash can leave the backend running; check for that before restarting. Do not connect clients directly to the backend port: such requests bypass the manager's switch lock. Directly started servers and other GPU applications are not controlled by the manager, and it cannot ensure enough GPU memory if those applications are active. Both endpoints are local-only and unauthenticated.
 
-The manager requires the existing Q8 model, audio.cpp executable and CUDA runtime under `outputs/` as described in Phase 4. Its backend log and temporary configuration are also under ignored `outputs/`; the temporary configuration is removed during normal shutdown. The local package and voice audio remain ignored by Git.
+The manager prefers the [dedicated runtime and Q8 model](SETUP.md), and falls back to the Phase 4 files under `outputs/` when that installation is absent. Its backend log and temporary configuration are also under ignored `outputs/`; the temporary configuration is removed during normal shutdown. The local package and voice audio remain ignored by Git.
 
 ## Validation
 

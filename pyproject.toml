@@ -20,6 +20,7 @@ voxcpm-stream = "voxcpm_realtime.stream:main"
 voxcpm-voices = "voxcpm_realtime.voices:main"
 voxcpm-client = "voxcpm_realtime.client:main"
 voxcpm-manager = "voxcpm_realtime.voice_manager:main"
+voxcpm-install-runtime = "voxcpm_realtime.install_runtime:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 [tool.pytest.ini_options]

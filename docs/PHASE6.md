@@ -21,7 +21,7 @@ Initialization refuses to overwrite an existing package manifest. It performs st
 
 ## Watermarked offline synthesis
 
-Install `pip install -e ".[watermark]"` into the project's virtual environment; `resemble-perth==1.0.1` was installed for the local test. The existing inference setup supplies PyTorch and the audio processing dependencies. With the Phase 4 audio.cpp files in place, stop other GPU servers, then:
+Install `pip install -e ".[watermark]"` into the project's virtual environment; `resemble-perth==1.0.1` was installed for the local test. The existing inference setup supplies PyTorch and the audio processing dependencies. With the [dedicated runtime](SETUP.md) installed (or the older Phase 4 files in place), stop other GPU servers, then:
 
 ```powershell
 .\scripts\start_audio_cpp.ps1 -VoiceId step150

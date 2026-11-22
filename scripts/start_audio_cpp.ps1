@@ -11,6 +11,14 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
+$stableExe = Join-Path $root '.runtime/audio-cpp-v0.9.5/bin/audiocpp_server.exe'
+$stableRuntime = Join-Path $root '.runtime/audio-cpp-v0.9.5/runtime'
+$stableModel = Join-Path $root 'models/VoxCPM2-GGUF/voxcpm2-q8_0.gguf'
+if ((Test-Path -LiteralPath $stableExe -PathType Leaf) -and (Test-Path -LiteralPath $stableRuntime -PathType Container) -and (Test-Path -LiteralPath $stableModel -PathType Leaf)) {
+    if (-not $PSBoundParameters.ContainsKey('Executable')) { $Executable = $stableExe }
+    if (-not $PSBoundParameters.ContainsKey('RuntimeDir')) { $RuntimeDir = $stableRuntime }
+    if (-not $PSBoundParameters.ContainsKey('Model')) { $Model = $stableModel }
+}
 function Get-ProjectPath([string]$Path) {
     if ([System.IO.Path]::IsPathRooted($Path)) { return (Resolve-Path -LiteralPath $Path).Path }
     return (Resolve-Path -LiteralPath (Join-Path $root $Path)).Path
@@ -47,6 +55,7 @@ $config = @{
     })
 }
 if ($referencePath) { $config.models[0].default_voice_preset = @{ voice_ref = $referencePath } }
+New-Item -ItemType Directory -Force -Path (Join-Path $root 'outputs') | Out-Null
 $configPath = Join-Path $root 'outputs/audio-cpp-server.generated.json'
 $config | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $configPath -Encoding utf8
 $originalPath = $env:PATH

@@ -20,6 +20,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from .stream import read_events
+from .runtime_paths import backend_paths
 from .voices import ID_PATTERN, list_packages, load_package
 
 
@@ -66,11 +67,9 @@ class BackendManager:
                 raise RuntimeError(f'Backend port {self.port} is already in use; stop the other server first') from exc
 
     def _start(self, package):
-        exe = self.root / 'outputs' / 'audio-cpp-bin' / 'audiocpp_server.exe'
-        runtime = self.root / 'outputs' / 'audio-cpp-runtime'
-        model = self.root / 'outputs' / 'voxcpm2-q8-local.gguf'
+        exe, runtime, model = backend_paths(self.root)
         if not exe.is_file() or not runtime.is_dir() or not model.is_file():
-            raise RuntimeError('audio.cpp executable, CUDA runtime, or local GGUF is missing; see Phase 4 setup')
+            raise RuntimeError('audio.cpp executable, CUDA runtime, or local GGUF is missing; run python -m voxcpm_realtime.install_runtime')
         self._check_port()
         entry = {'id': package['id'], 'family': 'voxcpm2', 'path': str(model), 'task': 'tts',
                  'mode': self.mode, 'session_options': {'voxcpm2.lora': package['directory']}}

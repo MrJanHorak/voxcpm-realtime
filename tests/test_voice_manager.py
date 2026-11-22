@@ -180,3 +180,24 @@ def test_real_child_process_restarts_and_rolls_back(tmp_path, monkeypatch):
     finally:
         manager.stop()
     assert not list(out.glob('voice-manager-*.json'))
+
+
+def test_dedicated_backend_does_not_require_outputs_in_advance(tmp_path, monkeypatch):
+    import voxcpm_realtime.voice_manager as module
+    root = tmp_path
+    bin_dir = root / '.runtime/audio-cpp-v0.9.5/bin'; bin_dir.mkdir(parents=True)
+    (bin_dir / 'audiocpp_server.exe').write_bytes(b'fake')
+    (root / '.runtime/audio-cpp-v0.9.5/runtime').mkdir()
+    model = root / 'models/VoxCPM2-GGUF/voxcpm2-q8_0.gguf'; model.parent.mkdir(parents=True)
+    model.write_bytes(b'fake')
+    manager = BackendManager(root)
+    monkeypatch.setattr(manager, '_check_port', lambda: None)
+    monkeypatch.setattr(manager, 'validate', lambda voice: {'id':voice, 'directory':'voice', 'reference':None})
+    seen = []
+    def fail_spawn(command, **kwargs):
+        seen.append(command[0]); raise OSError('simulated')
+    monkeypatch.setattr(module.subprocess, 'Popen', fail_spawn)
+    with pytest.raises(SwitchError, match='simulated'):
+        manager.select('first')
+    assert seen == [str(bin_dir / 'audiocpp_server.exe')]
+    assert (root / 'outputs').is_dir()

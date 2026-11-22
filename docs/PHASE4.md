@@ -6,7 +6,7 @@ This is an experimental, separate local server. It does not replace the Phase 3 
 
 ## Start the tested server
 
-The files prepared during the evaluation must still be present: `outputs/audio-cpp-bin/`, `outputs/audio-cpp-runtime/`, and `outputs/voxcpm2-q8-local.gguf`. Stop the native server first to free GPU memory. From the project directory:
+The launcher now prefers the [dedicated local installation](SETUP.md). If it is absent, the earlier `outputs/audio-cpp-bin/`, `outputs/audio-cpp-runtime/`, and `outputs/voxcpm2-q8-local.gguf` paths remain supported as a fallback. Stop the native server first to free GPU memory. From the project directory:
 
 ```powershell
 .\scripts\start_audio_cpp.ps1

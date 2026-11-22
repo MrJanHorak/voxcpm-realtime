@@ -66,3 +66,7 @@ See [Phase 6](docs/PHASE6.md) for package selection and buffered synthesis, and 
 ## Phase 6: voice manager
 
 Use the [local voice manager](docs/PHASE6_MANAGER.md) to select one installed package at a time and coordinate switching with managed requests.
+
+## Dedicated local runtime
+
+Run `python -m voxcpm_realtime.install_runtime` to install the pinned Windows CUDA backend and convert the exact local base model. See [dedicated setup](docs/SETUP.md) for prerequisites, checks and tested paths.
