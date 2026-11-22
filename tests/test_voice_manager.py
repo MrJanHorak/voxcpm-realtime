@@ -162,6 +162,8 @@ def test_real_child_process_restarts_and_rolls_back(tmp_path, monkeypatch):
         sock.bind(('127.0.0.1', 0))
         port = sock.getsockname()[1]
     manager = BackendManager(tmp_path, backend_port=port, startup_timeout=10)
+    # The stub server reuses its own port; the independent port-guard test covers occupied listeners.
+    monkeypatch.setattr(manager, '_check_port', lambda: None)
     monkeypatch.setattr(manager, 'validate', lambda voice: {'id':voice, 'directory':'voice', 'reference':None})
     original_popen = subprocess.Popen
     monkeypatch.setattr(module.subprocess, 'Popen', lambda command, **kw: original_popen([sys.executable, str(stub), command[2]], **kw))

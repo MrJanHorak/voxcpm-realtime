@@ -23,6 +23,8 @@ voxcpm-manager = "voxcpm_realtime.voice_manager:main"
 voxcpm-install-runtime = "voxcpm_realtime.install_runtime:main"
 [tool.setuptools.packages.find]
 where = ["src"]
+[tool.setuptools.package-data]
+voxcpm_realtime = ["static/*.html"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]

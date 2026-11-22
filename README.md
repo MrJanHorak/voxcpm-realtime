@@ -1,72 +1,44 @@
 # VoxCPM Real-Time Voice Engine
 
-Independent local VoxCPM2 LoRA voice validation and persistent inference engine. The current native backend is experimental and has not achieved real-time speed on the tested GPU. The existing `voiceover-automation` project is **not modified**.
+A local Windows voice engine for trained VoxCPM2 LoRA voices. It uses a pinned audio.cpp Q8 backend and can return Perth-watermarked WAV audio through a local API. The browser test page lets you load a voice, enter text and play or download the result. Voice recordings, adapters, model weights and generated audio stay on your computer and are excluded from Git.
 
-## Source compatibility
+## Quick start
 
-The training project's documentation identifies VoxCPM2 (`voxcpm` 2.0.3), a LoRA checkpoint directory containing `lora_config.json` and `lora_weights.safetensors`, and a specific base-model revision. Do not assume adapters are compatible with other revisions. See https://github.com/MrJanHorak/voiceover-automation/blob/main/training/TRAINED_VOICES.md
+The following assumes the dedicated runtime, matching base model and a private `step150` voice package are already installed. For a new installation, see [Setup](docs/SETUP.md) and [Voice packages](docs/PHASE6.md).
 
-## Setup (Windows PowerShell, Python 3.11)
+1. Open PowerShell in the project folder and activate `.venv`.
+2. Start the local manager:
 
-```powershell
-py -3.11 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -e ".[dev]"
-pytest -q
-```
+   ```powershell
+   python -m voxcpm_realtime.voice_manager --mode offline
+   ```
 
-Copy a **private** checkpoint directory to `voices/step150/`, preserving the two original filenames. Optionally add `reference.wav`, `transcript.txt` and `voice.json`. No voice assets are bundled.
+3. Open **http://127.0.0.1:8767/** on the same computer. Select `step150`, click **Load voice**, enter text, then click **Generate speech**. Use the audio controls to listen or download the WAV.
 
-```powershell
-voicecheck .\voices\step150
-python -m uvicorn voxcpm_realtime.api:app --host 127.0.0.1 --port 8765
-```
+The page and `/api/synthesize` buffer the complete output before returning it. The manager also supports `--mode streaming`; the watermarked API remains buffered in either mode. To test the separate experimental live-streaming Python client, see [Watermarked streaming](docs/PHASE6_STREAMING.md).
 
-Then visit http://127.0.0.1:8765/docs or request `GET /health` and `GET /api/capabilities`. `POST /api/voices/validate` accepts `{"folder":"voices/step150"}`.
+## For application developers
 
-## Scope and limitations
+Use `POST http://127.0.0.1:8767/api/synthesize` for a complete 48 kHz mono WAV with the Perth watermark applied and checked. Start the manager and select a voice first. See [API integration](docs/API.md) for complete HTTP and Python examples, errors and streaming details.
 
-- Validates JSON, Safetensors readability/tensor names and optional WAV metadata; no arbitrary model code is executed.
-- `compatible: true` means **static checks passed**, NOT that the adapter matches the installed base model or generates correct speech.
-- Native local inference and benchmarking are implemented; experimental audio.cpp streaming is available. Buffered and experimental streaming clients apply Perth watermarking; the raw backends do not.
-- The validation API accepts local filesystem paths and is intentionally localhost-only; add path restrictions and authentication before remote deployment.
-- Keep private voice recordings and LoRA weights out of version control. Only use voices with permission and retain required model watermarking and AI-generated-audio disclosures.
+**Important:** `/v1/audio/speech`, the underlying audio.cpp server and older native endpoints return raw audio without applying the watermark. The `step150` package explicitly requires the Perth implicit watermark. Use `/api/synthesize` or the provided watermarking clients for this voice.
 
-## Phase 2 prerequisites
+## Current scope
 
-1. Inspect the actual `lora_config.json` and `voice.json` for model identifiers and LoRA keys.
-2. Pin the exact VoxCPM2 base checkpoint and Python/runtime versions.
-3. Implement one-shot generation with the native `voxcpm` runtime and measure peak GPU memory on the RTX 3050 4 GB.
-4. Evaluate the persistent `audio.cpp` runtime separately for Q8 GPU deployment, with a verified LoRA merge/loading path.
-5. Only after successful audio generation, implement chunked streaming and latency tests.
+- One active voice at a time; switching restarts the backend. Switching between distinct trained voices has not yet been tested.
+- The local manager and test page have no authentication and are intended for localhost, not direct exposure to a network or the internet.
+- Watermarked live streaming is experimental. Segment detection, short-excerpt detection and failure behavior have limitations described in [Watermarked streaming](docs/PHASE6_STREAMING.md).
+- The tested hardware is an NVIDIA RTX 3050 Laptop with 4 GB VRAM. Loading a voice takes time, and other GPU workloads can affect availability and speed.
+- The voice package validator performs static checks; it cannot prove a voice is compatible with a model or assess generated speech quality.
+- The local detector check does not guarantee a watermark survives all edits or transformations. Label generated audio appropriately and use voice assets only with permission.
 
-## Phase 2: native VoxCPM2 first WAV (experimental)
+## Documentation
 
-See [Phase 2 setup](docs/PHASE2.md). Install with `pip install -e ".[dev,inference]"` after configuring a compatible CUDA PyTorch build. Run `voxcpm-speak --model-dir ./models/VoxCPM2 --voice-dir ./voices/step150 --text "Hello, this is a test." --output ./outputs/first.wav`.
+- [Dedicated Windows runtime setup](docs/SETUP.md)
+- [Application API and browser test page](docs/API.md)
+- [Private voice packages and buffered watermarking](docs/PHASE6.md)
+- [Voice manager and switching](docs/PHASE6_MANAGER.md)
+- [Experimental watermarked streaming](docs/PHASE6_STREAMING.md)
+- [Earlier native and Q8 benchmarks](docs/PHASE3.md)
 
-This is not streaming. Base-model and adapter assets are not committed. See [Phase 3](docs/PHASE3.md) for the persistent server and measured results.
-
-## Phase 3: persistent local inference
-
-Set `VOXCPM_MODEL_DIR`, `VOXCPM_VOICE_DIR`, and optionally `VOXCPM_REFERENCE_WAV` before starting uvicorn. Use **one worker** on localhost. `POST /api/warmup` loads the model and generates a warmup; `POST /api/synthesize` accepts `{"text":"Hello.","seed":35}` and returns WAV audio. Requests serialize within the process. See [Phase 3](docs/PHASE3.md) for setup, measurements, and limitations.
-
-## Phase 4: experimental Q8 backend
-
-The locally evaluated audio.cpp backend is substantially faster on the tested RTX 3050. See [Phase 4](docs/PHASE4.md) for the measured results, limitations, and separate local server instructions. The user reported that the test samples sounded good; watermark presence remains unverified.
-
-## Phase 5: experimental streaming
-
-Start the audio.cpp server in streaming mode and receive or play audio as it is generated. See [Phase 5](docs/PHASE5.md) for commands, API details, measured first-audio latency, and limitations.
-
-## Phase 6: private voice packages
-
-See [Phase 6](docs/PHASE6.md) for package selection and buffered synthesis, and [watermarked streaming](docs/PHASE6_STREAMING.md) for the experimental live client. The `step150` voice requires Perth watermarking; raw server responses do not apply it.
-
-## Phase 6: voice manager
-
-Use the [local voice manager](docs/PHASE6_MANAGER.md) to select one installed package at a time and coordinate switching with managed requests.
-
-## Dedicated local runtime
-
-Run `python -m voxcpm_realtime.install_runtime` to install the pinned Windows CUDA backend and convert the exact local base model. See [dedicated setup](docs/SETUP.md) for prerequisites, checks and tested paths.
+The separate `voiceover-automation` training repository is not modified by this project.

@@ -5,6 +5,8 @@ import argparse
 import asyncio
 from contextlib import asynccontextmanager
 import json
+import io
+import wave
 import os
 from pathlib import Path
 import socket
@@ -16,10 +18,11 @@ from urllib.request import Request, urlopen
 
 import httpx
 from fastapi import FastAPI, HTTPException, Request as FastAPIRequest
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from fastapi.responses import HTMLResponse, Response, StreamingResponse
+from pydantic import BaseModel, Field
 
-from .stream import read_events
+from .client import VoiceClient
+from .stream import SAMPLE_RATE, StreamError, read_events
 from .runtime_paths import backend_paths
 from .voices import ID_PATTERN, list_packages, load_package
 
@@ -161,8 +164,15 @@ class SelectRequest(BaseModel):
     voice: str
 
 
-def create_app(manager):
+class WatermarkedSynthesisRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=2000)
+    voice: str | None = None
+    seed: int = Field(default=35, ge=0, le=4294967295)
+
+
+def create_app(manager, watermarker=None):
     lock = asyncio.Lock()
+    watermarker = watermarker if watermarker is not None else VoiceClient()
 
     @asynccontextmanager
     async def lifespan(app):
@@ -171,6 +181,63 @@ def create_app(manager):
             await asyncio.to_thread(manager.stop)
 
     app = FastAPI(title='VoxCPM Local Voice Manager', lifespan=lifespan)
+
+    @app.get('/', response_class=HTMLResponse, include_in_schema=False)
+    async def index():
+        page = Path(__file__).parent / 'static' / 'index.html'
+        return HTMLResponse(page.read_text(encoding='utf-8'), headers={'Cache-Control': 'no-store'})
+
+    @app.post('/api/synthesize', response_class=Response, responses={200: {'content': {'audio/wav': {}}}})
+    async def synthesize(body: WatermarkedSynthesisRequest):
+        if not body.text.strip():
+            raise HTTPException(422, detail='Text must not be empty')
+        async with lock:
+            status = manager.status()
+            if not status['ready']:
+                raise HTTPException(503, detail='Select a voice first')
+            if body.voice is not None and body.voice != status['voice']:
+                raise HTTPException(409, detail='Selected voice does not match the active voice')
+            payload = {'model': status['voice'], 'input': body.text, 'seed': body.seed}
+            if status['mode'] == 'streaming':
+                payload.update({'response_format': 'pcm', 'stream_format': 'sse',
+                                'options': {'retry_badcase': False}})
+            try:
+                async with httpx.AsyncClient(timeout=httpx.Timeout(manager.timeout), trust_env=False) as client:
+                    async with client.stream('POST', manager.url + '/v1/audio/speech', json=payload) as upstream:
+                        if upstream.status_code != 200:
+                            raise HTTPException(502, detail=f'Voice backend returned HTTP {upstream.status_code}')
+                        content_type = upstream.headers.get('content-type', '').split(';', 1)[0].strip().lower()
+                        expected = ('text/event-stream',) if status['mode'] == 'streaming' else ('audio/wav', 'audio/x-wav')
+                        if content_type not in expected:
+                            raise HTTPException(502, detail='Voice backend returned an unexpected audio format')
+                        data = bytearray()
+                        async for part in upstream.aiter_bytes():
+                            data.extend(part)
+                            if len(data) > 64 * 1024 * 1024:
+                                raise HTTPException(502, detail='Voice backend response exceeds the size limit')
+            except httpx.TimeoutException as exc:
+                raise HTTPException(504, detail='Voice backend timed out') from exc
+            except httpx.HTTPError as exc:
+                raise HTTPException(502, detail='Voice backend could not be reached') from exc
+        if status['mode'] == 'streaming':
+            try:
+                chunks = read_events(bytes(data).splitlines(keepends=True))
+                buffer = io.BytesIO()
+                with wave.open(buffer, 'wb') as wav:
+                    wav.setnchannels(1); wav.setsampwidth(2); wav.setframerate(SAMPLE_RATE)
+                    for chunk in chunks:
+                        wav.writeframesraw(chunk)
+                raw_wav = buffer.getvalue()
+            except (StreamError, UnicodeError, ValueError) as exc:
+                raise HTTPException(502, detail=f'Voice backend returned an incomplete stream: {exc}') from exc
+        else:
+            raw_wav = bytes(data)
+        try:
+            marked = await asyncio.to_thread(watermarker.watermark_wav, raw_wav)
+        except Exception as exc:
+            raise HTTPException(503, detail='Watermarking or verification failed; no audio returned') from exc
+        return Response(content=marked, media_type='audio/wav',
+                        headers={'Cache-Control': 'no-store', 'X-Audio-Watermark': 'perth-implicit'})
 
     @app.get('/health')
     async def health():
